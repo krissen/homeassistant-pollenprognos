@@ -1,4 +1,5 @@
 """Pollenprognos Custom Component."""
+
 import logging
 from datetime import timedelta, datetime
 
@@ -10,7 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import UpdateFailed, DataUpdateCoordinator
 
 from .api import PollenApi, WeeklyPollenForecast
-from .const import DOMAIN, CONF_URL, CONF_CITY
+from .const import DOMAIN, CONF_CITY
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 PLATFORMS = [Platform.SENSOR]
@@ -21,9 +22,6 @@ type PollenprognosConfigEntry = ConfigEntry[PollenprognosDataUpdateCoordinator]
 
 async def async_setup_entry(hass: HomeAssistant, entry: PollenprognosConfigEntry):
     """Set up this integration using UI."""
-    if hass.data.get(DOMAIN) is None:
-        hass.data.setdefault(DOMAIN, {})
-
     client = PollenApi(session=async_get_clientsession(hass))
 
     coordinator = PollenprognosDataUpdateCoordinator(hass, client=client, entry=entry)
@@ -40,16 +38,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: PollenprognosConfigEntry
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: PollenprognosConfigEntry) -> bool:
+async def async_unload_entry(
+    hass: HomeAssistant, entry: PollenprognosConfigEntry
+) -> bool:
     """Handle removal of an entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
-
-    return unload_ok
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
-async def async_reload_entry(hass: HomeAssistant, entry: PollenprognosConfigEntry) -> None:
+async def async_reload_entry(
+    hass: HomeAssistant, entry: PollenprognosConfigEntry
+) -> None:
     """Reload config entry."""
     await hass.config_entries.async_reload(entry.entry_id)
 
@@ -58,13 +56,16 @@ class PollenprognosDataUpdateCoordinator(DataUpdateCoordinator[WeeklyPollenForec
     """Class to manage fetching data from the API."""
 
     def __init__(
-            self,
-            hass: HomeAssistant,
-            entry: PollenprognosConfigEntry,
-            client: PollenApi
+        self, hass: HomeAssistant, entry: PollenprognosConfigEntry, client: PollenApi
     ) -> None:
         """Initialize."""
-        super().__init__(hass, _LOGGER, config_entry=entry, name=DOMAIN, update_interval=SCAN_INTERVAL)
+        super().__init__(
+            hass,
+            _LOGGER,
+            config_entry=entry,
+            name=DOMAIN,
+            update_interval=SCAN_INTERVAL,
+        )
         self._entry = entry
         self._api = client
         self._region_id = self._entry.data[CONF_CITY]

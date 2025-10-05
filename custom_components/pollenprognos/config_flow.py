@@ -31,10 +31,7 @@ class PollenprognosFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         except vol.Invalid:
             errors["base"] = "bad_host"
 
-        return self.async_show_form(
-            step_id="user",
-            errors=errors
-        )
+        return self.async_show_form(step_id="user", errors=errors)
 
     async def async_step_fetch_failed(self, user_input=None):
         """Fetching pollen data failed."""
@@ -43,7 +40,11 @@ class PollenprognosFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_select_city(self, user_input=None):
         if user_input is not None:
             self._init_info[CONF_CITY] = user_input[CONF_CITY]
-            self._init_info[CONF_NAME] = next(item for item in self.data if item.region_id == self._init_info[CONF_CITY]).name
+            self._init_info[CONF_NAME] = next(
+                item
+                for item in self.data
+                if item.region_id == self._init_info[CONF_CITY]
+            ).name
             return await self.async_step_select_pollen()
 
         if self.data is None:
@@ -53,17 +54,17 @@ class PollenprognosFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="select_city",
             data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_CITY, default=list(cities.keys())): vol.In(cities)
-                }
-            )
+                {vol.Required(CONF_CITY, default=list(cities.keys())): vol.In(cities)}
+            ),
         )
 
     async def async_step_select_pollen(self, user_input=None):
         if user_input is not None:
             self._init_info[CONF_ALLERGENS] = user_input[CONF_ALLERGENS]
             self._init_info[CONF_NUMERIC_STATE] = user_input[CONF_NUMERIC_STATE]
-            await self.async_set_unique_id(f"{self._init_info[CONF_CITY]}-{self._init_info[CONF_NAME]}")
+            await self.async_set_unique_id(
+                f"{self._init_info[CONF_CITY]}-{self._init_info[CONF_NAME]}"
+            )
             self._abort_if_unique_id_configured()
 
             return self.async_create_entry(
@@ -79,10 +80,12 @@ class PollenprognosFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="select_pollen",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_ALLERGENS, default=list(pollen.keys())): cv.multi_select(pollen),
-                    vol.Optional(CONF_NUMERIC_STATE, default=False): bool
+                    vol.Required(
+                        CONF_ALLERGENS, default=list(pollen.keys())
+                    ): cv.multi_select(pollen),
+                    vol.Optional(CONF_NUMERIC_STATE, default=False): bool,
                 }
-            )
+            ),
         )
 
     async def _async_task_fetch_cities(self):
